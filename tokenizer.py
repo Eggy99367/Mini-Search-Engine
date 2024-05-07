@@ -50,6 +50,7 @@ def compute_word_frequencies(document_number: int,
                              url: str,
                              encoding: str) -> dict: 
     result = {}
+    #haven't think of a way to use stemmed_token_list
     for index in range(len(token_list)):
 
         token = token_list[index]
@@ -69,5 +70,5 @@ def compute_word_frequencies(document_number: int,
 
 
 if __name__ == "__main__":
-
+    #testing
     read_in_the_json_file("/home/hsingl1/comp121_Assignment3/ANALYST/www_cs_uci_edu/0a0056fb9a53ec6f190aa2b5fb1a97c33cd69726c8841f89d24fa5abd84d276c.json")
