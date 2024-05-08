@@ -27,3 +27,6 @@ class Posting: # This is the posting class that stores indexes information
     def encodingInfo(self):
 
         return self.encoding
+    
+    def __repr__(self):
+        return f"{self.docId}: {self.frequency}"
