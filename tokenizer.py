@@ -71,4 +71,4 @@ def compute_word_frequencies(document_number: int,
 
 if __name__ == "__main__":
     #testing
-    read_in_the_json_file("/home/hsingl1/comp121_Assignment3/ANALYST/www_cs_uci_edu/0a0056fb9a53ec6f190aa2b5fb1a97c33cd69726c8841f89d24fa5abd84d276c.json")
+    read_in_the_json_file("Comp121_Assignment3/DEV/aiclub_ics_uci_edu/8ef6d99d9f9264fc84514cdd2e680d35843785310331e1db4bbd06dd2b8eda9b.json")

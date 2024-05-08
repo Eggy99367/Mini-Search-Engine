@@ -1,35 +1,48 @@
 from posting import Posting
+import os
+import json
+from tokenizer import tokenize, compute_word_frequencies
+from posting import Posting
 
-def parse(path: str) -> str:
-  pass
+def iterate_files(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            yield file_path
 
-def tokenize(parsed_text: str) -> list[str]:
-  pass
+def get_word_freq(tokens):
+    word_freq_dict = {}
+    for token in tokens:
+        if token not in word_freq_dict:
+            word_freq_dict[token] = 0
+        word_freq_dict[token] += 1
+    return word_freq_dict
 
-def stemming(tokens: list[str]) -> dict[str: int]:
-  pass
+def build_inverted_index(directory_path: str):
+    index = {}
+    document_id = 0
+    for path in iterate_files(directory_path):
+        # print(path)
+        document_id += 1
 
-def build_index(file_paths):
-  index = {}
-  document_id = 0
-  for path in file_paths:
-    document_id += 1
-    parsed_text = parse(path)
-    tokens = tokenize(parsed_text)
-    stemmed_tokens = stemming(tokens)
+        with open(path, 'r') as file:
+            data = json.load(file)
+            file_content = data['content']
 
-    for token, freq in stemmed_tokens.items():
-      if token not in index:
-        index[token] = []
-      index[token].append(Posting())
-      
-  return index
+        result, stemmed_result = tokenize(file_content)
+        word_freq_dict = get_word_freq(stemmed_result)
 
-# Create the inverted index: a map with the token as a key and a list of its corresponding postings
-# def invert_index(tokenList):
-#   result = dict()
-#   for token in tokenList:
-#     if token in result:
-#       result[token] +=1
-#     else:
-#       result[token] = 1
+        for token, freq in word_freq_dict.items():
+            if token not in index:
+                index[token] = []
+            index[token].append(Posting(freq, document_id, data['url'], data['encoding']))
+        
+        if document_id % 2000 == 0:
+            print(index)
+
+    return index
+
+if __name__ == "__main__":
+    result = build_inverted_index("/Users/vince/Desktop/ICS 121/Assignment3/Comp121_Assignment3/TEST_DEV")
+    print(f"----------------------------final result----------------------------")
+    print(result)
