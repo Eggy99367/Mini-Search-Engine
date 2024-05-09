@@ -5,26 +5,26 @@ from posting import Posting
 
 
 
-def read_in_the_json_file(textFile_path: str): # read in the json file but don't know what parameter is given(need to fix)
+# def read_in_the_json_file(textFile_path: str): # read in the json file but don't know what parameter is given(need to fix)
 
-    with open(textFile_path, 'r') as file1:
-        data = json.load(file1)
+#     with open(textFile_path, 'r') as file1:
+#         data = json.load(file1)
 
-    # url = data['url']
+#     # url = data['url']
 
-    # Access the content
-    content = data['content']
-    result, stemmed_result = tokenize(content)
-    # print(result)
-    # print(stemmed_result)
-    the_word_dict = compute_word_frequencies(1, result, 
-                                             stemmed_result, data['url'], data['encoding'])
-    for key, value in the_word_dict.items():
+#     # Access the content
+#     content = data['content']
+#     result, stemmed_result = tokenize(content)
+#     # print(result)
+#     # print(stemmed_result)
+#     the_word_dict = compute_word_frequencies(1, result, 
+#                                              stemmed_result, data['url'], data['encoding'])
+#     for key, value in the_word_dict.items():
 
-        print(f"{key}: {value.docIdInfo()}")
+#         print(f"{key}: {value.docIdInfo()}")
     
-    # Access the encoding
-    # encoding = data['encoding']
+#     # Access the encoding
+#     # encoding = data['encoding']
 
 def tokenize(text) -> {list, list}:
     porter2Stemmer1 = Porter2Stemmer() #declaring snowballStemmer object
@@ -44,25 +44,25 @@ def tokenize(text) -> {list, list}:
         tokens.append(word)
     return tokens, stemmed_tokens
 
-def compute_word_frequencies(document_number: int, 
-                             token_list: list, 
-                             stemmed_token_list: list,
-                             url: str,
-                             encoding: str) -> dict: 
-    result = {}
-    #haven't think of a way to use stemmed_token_list
-    for index in range(len(token_list)):
+# def compute_word_frequencies(document_number: int, 
+#                              token_list: list, 
+#                              stemmed_token_list: list,
+#                              url: str,
+#                              encoding: str) -> dict: 
+#     result = {}
+#     #haven't think of a way to use stemmed_token_list
+#     for index in range(len(token_list)):
 
-        token = token_list[index]
+#         token = token_list[index]
 
-        if token not in result:
+#         if token not in result:
 
-            result[token] = Posting(1, [(document_number, index)], url, encoding)
+#             result[token] = Posting(1, [(document_number, index)], url, encoding)
 
-        else:
-            result[token].addDocId((document_number, index))
+#         else:
+#             result[token].addDocId((document_number, index))
 
-    return result
+#     return result
 
 
 
