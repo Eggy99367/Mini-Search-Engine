@@ -2,12 +2,13 @@
 
 class Posting: # This is the posting class that stores indexes information
 
-    def __init__(self, frequency:int, docId: list, url: str, encoding:str, weight: int):
+    def __init__(self, frequency:int, docId: list, url: str, encoding:str, weight: int, index: list):
         self.frequency = frequency
         self.docId = docId
         self.url = url
         self.encoding = encoding 
         self.weight = weight
+        self.index = index
         # probably need more attributes
     
     def addDocId(self, the_tuple: tuple) -> None:
@@ -31,4 +32,9 @@ class Posting: # This is the posting class that stores indexes information
         return self.encoding
     
     def __repr__(self):
-        return f"{self.docId}: {self.frequency}: {self.weight}"
+        return (f"docID: {self.docId}, "
+        f"Freq: {self.frequency}, "
+        f"Weight: {self.weight}, "
+        f"Index: {self.index}, "
+        f"Url: {self.url}, "
+        f"Encoding: {self.encoding}")
