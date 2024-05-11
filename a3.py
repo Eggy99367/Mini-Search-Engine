@@ -123,6 +123,7 @@ def build_inverted_index(directory_path: str):
         if document_id % 2000 == 0:
             update_report(index, document_id)
     update_report(index, document_id)
+    print(index.keys())
     return index
 
 # def test(path):
@@ -150,5 +151,5 @@ if __name__ == "__main__":
     # result = build_inverted_index("/home/hsingl1/comp121_Assignment3/TEST_DEV")
     # print(f"----------------------------final result----------------------------")
     # print(result)
-    build_inverted_index("/home/hsingl1/comp121_Assignment3/DEV")
+    build_inverted_index("/home/hsingl1/comp121_Assignment3/Test")
     # test("/home/hsingl1/comp121_Assignment3/TEST_DEV/www_cs_uci_edu/0a77b224f19e2fadc0ec26a19e7b6219dc56833f005fbd658f6eb8194804883e.json")

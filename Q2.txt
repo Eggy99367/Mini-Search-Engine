@@ -1,1 +1,1 @@
-Number of Unique words: 939780
+Number of Unique words: 89
