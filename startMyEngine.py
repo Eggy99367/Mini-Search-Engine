@@ -1,0 +1,1 @@
+print(len("Key: begin: docID: 1, Freq: 2, Weight: 1, Index: [0, 70], Url: https://www.cs.uci.edu/event/c-mohan-2/?ical=1, Encoding: asciiKey: begin: docID: 2, Freq: 2, Weight: 1, Index: [0, 70], Url: https://www.cs.uci.edu/event/c-mohan-2/?ical=1, Encoding: ascii"))

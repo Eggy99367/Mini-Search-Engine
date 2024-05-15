@@ -32,10 +32,15 @@ def get_file_size_in_kb(file_path):
 
 def update_report(index, document_id):
 
+    keyPositionDict = {}
+
     with open('result.txt', 'w') as file1: 
+        start_index = 5
         for key, value in index.items():
             for each_posting in value:
                 file1.write(f"Key: {key}: {each_posting}")
+            keyPositionDict[key] = start_index
+            start_index = file1.tell() + 1
             file1.write("\n")
     
     with open('Q1.txt', 'w') as file1: 
@@ -46,6 +51,12 @@ def update_report(index, document_id):
 
     with open('Q3.txt', 'w') as file1: 
         file1.write(f"size: {get_file_size_in_kb('result.txt')}KB")
+
+    # with open("result.txt", 'r') as file1:
+    #     file1.seek(18294)
+    #     print(file1.readline())
+    # print(keyPositionDict)
+    return keyPositionDict
 
 def seperate_tokens(parsedHTML):
     tokens = [[], [], []]
@@ -66,6 +77,7 @@ def seperate_tokens(parsedHTML):
 
 def build_inverted_index(directory_path: str):
     index = {}
+    keyPositionDict = {} # This record the index of each key in the result so we can locate them quickly
     document_id = 0
     paths = list(iterate_files(directory_path))
     total_paths = len(paths)
@@ -82,22 +94,6 @@ def build_inverted_index(directory_path: str):
             parsedHTML = BeautifulSoup(file_content, 'html.parser')
 
             tokens, stemmed_tokens = seperate_tokens(parsedHTML)
-            # for element in parsedHTML.find_all():
-            #     if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']: # heading
-            #         tmpTokens, tmpStemmedTokens = tokenize(element.text)
-            #         headingTokens += tmpTokens
-            #         stemmedHeadingTokens += tmpStemmedTokens
-            #     elif element.name in ['b', 'strong']:# bolds and strongs
-            #         tmpTokens, tmpStemmedTokens = tokenize(element.text)
-            #         strongsBoldsTokens += tmpTokens
-            #         stemmedStrongsBoldsTokens += tmpStemmedTokens
-            #     elif element.name in ['body', 'p']:  # Exclude links include body
-            #         tmpTokens, tmpStemmedTokens = tokenize(element.text)
-            #         normalTokens += tmpTokens
-            #         stemmedNormalTokens += tmpStemmedTokens
-            
-            # print(stemmedHeadingTokens)
-            # print(stemmedHeadingTokens)
                 
             heading_word_freq_dict = get_word_freq(stemmed_tokens[0])
             bolds_word_freq_dict = get_word_freq(stemmed_tokens[1])
@@ -122,8 +118,8 @@ def build_inverted_index(directory_path: str):
             print(f"process document #{document_id}/{total_paths}")
         if document_id % 2000 == 0:
             update_report(index, document_id)
-    update_report(index, document_id)
-    print(index.keys())
+    keyPositionDict = update_report(index, document_id)
+    # print(index.keys())
     return index
 
 # def test(path):

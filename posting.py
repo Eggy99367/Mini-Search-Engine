@@ -14,6 +14,10 @@ class Posting: # This is the posting class that stores indexes information
     def addDocId(self, the_tuple: tuple) -> None:
 
         self.docId.append(the_tuple)
+
+    def indexInfo(self):
+
+        return self.index
     
     def freqInfo(self):
 
@@ -38,3 +42,11 @@ class Posting: # This is the posting class that stores indexes information
         f"Index: {self.index}, "
         f"Url: {self.url}, "
         f"Encoding: {self.encoding}")
+    
+    def __eq__(self, other):
+        if not isinstance(other, Posting):
+            return False
+        return (self.index, self.frequency, self.weight) == (other.index, other.frequency, other.weight)
+
+    def __hash__(self):
+        return hash((self.index, self.frequency, self.weight))
