@@ -35,6 +35,16 @@ class Posting: # This is the posting class that stores indexes information
 
         return self.encoding
     
+    def to_dict(self):
+        return {
+            "freq": self.frequency,
+            "docId": self.docId,
+            "url": self.url,
+            "encoding": self.encoding,
+            "wgt": self.weight,
+            "idx": self.index
+        }
+    
     def __repr__(self):
         return (f"docID: {self.docId}, "
         f"Freq: {self.frequency}, "
