@@ -55,40 +55,40 @@ def html_get_word_freq(token_lists):
             word_freq_dict[token][wgt].append(index)
     return word_freq_dict
 
-def simhash(tokens, hash_bits=128):
-    V = [0] * hash_bits
-    for word, all_presence in tokens.items():
-        hash_value = int(hashlib.md5(word.encode('utf-8')).hexdigest(), 16)
-        for i in range(hash_bits):
-            # extracts the value of the i-th bit from the right of hash_value
-            bit = (hash_value >> i) & 1
-            if bit == 1:
-                V[i] += len(all_presence)
-            else:
-                V[i] -= len(all_presence)
-    fingerprint = 0
-    for i in range(hash_bits):
-        if V[i] >= 0:
-            # sets the i-th bit of fingerprint to 1 without affecting the other bits
-            fingerprint |= (1 << i)
-    return fingerprint
+# def simhash(tokens, hash_bits=128):
+#     V = [0] * hash_bits
+#     for word, all_presence in tokens.items():
+#         hash_value = int(hashlib.md5(word.encode('utf-8')).hexdigest(), 16)
+#         for i in range(hash_bits):
+#             # extracts the value of the i-th bit from the right of hash_value
+#             bit = (hash_value >> i) & 1
+#             if bit == 1:
+#                 V[i] += len(all_presence)
+#             else:
+#                 V[i] -= len(all_presence)
+#     fingerprint = 0
+#     for i in range(hash_bits):
+#         if V[i] >= 0:
+#             # sets the i-th bit of fingerprint to 1 without affecting the other bits
+#             fingerprint |= (1 << i)
+#     return fingerprint
 
-def are_similar(hash_a, hash_b, threshold, hash_bits=128):
-    # XOR to find differing bits
-    differing_bits = hash_a ^ hash_b
+# def are_similar(hash_a, hash_b, threshold, hash_bits=128):
+#     # XOR to find differing bits
+#     differing_bits = hash_a ^ hash_b
 
-    # Count the number of same bits
-    same_bits = hash_bits - bin(differing_bits).count('1')
+#     # Count the number of same bits
+#     same_bits = hash_bits - bin(differing_bits).count('1')
 
-    # Calculate similarity as the fraction of bits that are the same
-    similarity = same_bits / hash_bits
-    return similarity >= threshold
+#     # Calculate similarity as the fraction of bits that are the same
+#     similarity = same_bits / hash_bits
+#     return similarity >= threshold
 
-def is_new_footprint(new_footprint, footprints):
-    for value in footprints:
-        if are_similar(new_footprint, value, 0.9):
-            return False
-    return True
+# def is_new_footprint(new_footprint, footprints):
+#     for value in footprints:
+#         if are_similar(new_footprint, value, 0.9):
+#             return False
+#     return True
 
 if __name__ == "__main__":
     pass

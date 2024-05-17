@@ -17,7 +17,7 @@ def add_in_dictionary(index, document_id, stemmed_dict):
     for token, idxs in stemmed_dict.items():
         if token not in index:
             index[token] = []
-        index[token].append(Posting(len(idxs), document_id, [], [], idxs)) # treat as normal text
+        index[token].append(Posting(document_id, len(idxs), [], [], idxs)) # treat as normal text
     return index
 
 def html_add_in_dictionary(index, document_id, stemmed_dict):
@@ -28,20 +28,17 @@ def html_add_in_dictionary(index, document_id, stemmed_dict):
             weight += len(idxs) * wgt_list[list_idx]
         if token not in index:
             index[token] = []
-        index[token].append(Posting(weight, document_id, *idxs_list))
+        index[token].append(Posting(document_id, weight, *idxs_list))
     return index
 
 def build_inverted_index(directory_path: str):
     index = {}
     all_footprints = []
     all_urls = {}
-    keyPositionDict = {} # This record the index of each key in the result so we can locate them quickly
+    keyPositionList = []
     document_id = 0
-    with open('result.txt', 'w') as file: 
-        file.write("{}")
+    open('index.txt', 'w')
     with open('all_urls.txt', 'w') as file: 
-        file.write("{}")
-    with open('words.txt', 'w') as file: 
         file.write("{}")
 
     paths = list(iterate_files(directory_path))
@@ -61,17 +58,6 @@ def build_inverted_index(directory_path: str):
 
             tokens, stemmed_tokens = seperate_tokens(parsedHTML)
             word_freq_dict = html_get_word_freq(stemmed_tokens)
-
-            # heading_word_freq_dict = get_word_freq(stemmed_tokens[0])
-            # bolds_word_freq_dict = get_word_freq(stemmed_tokens[1])
-            # normal_word_freq_dict = get_word_freq(stemmed_tokens[2])
-
-            # footprint = simhash(normal_word_freq_dict)
-            # print(footprint)
-            # if not is_new_footprint(footprint, all_footprints):
-            #     print("similar content, skip")
-            #     continue
-            # all_footprints.append(footprint)
             
             index = html_add_in_dictionary(index, document_id, word_freq_dict)
             #heading
@@ -87,16 +73,16 @@ def build_inverted_index(directory_path: str):
 
             add_in_dictionary(index, document_id, word_freq_dict)
             print(f"\rprocess document #{document_id}/{total_paths}                    ", end="")
-        if document_id % 10 == 0:
+        if document_id % 1000 == 0:
             print(f"\rprocess document #{document_id}/{total_paths} Updating to Disk...", end="")
             with Timer():
-                update_report(index, all_urls, document_id)
+                keyPositionList = update_report(index, all_urls, document_id)
                 print("\r\x1b[K", end="")
             index = {}
-    with Timer():
-        keyPositionDict = update_report(index, all_urls, document_id)
-        print("\r\x1b[K", end="")
+    # with Timer():
+    #     keyPositionDict = update_report(index, all_urls, document_id)
+    #     print("\r\x1b[K", end="")
     return index
 
 if __name__ == "__main__":
-    build_inverted_index("/Users/vince/Desktop/UCI/Sophomore/Sprint 2024/ICS 121/Assignment3/Comp121_Assignment3/DEV")
+    build_inverted_index("/Users/vince/Desktop/UCI/Sophomore/Spring 2024/ICS 121/Assignment3/Comp121_Assignment3/DEV")
