@@ -1,7 +1,4 @@
-import json
-from porter2stemmer import Porter2Stemmer # we can use this
-from posting import Posting
-import hashlib
+from porter2stemmer import Porter2Stemmer
 
 def tokenize(text) -> {list, list}:
     porter2Stemmer1 = Porter2Stemmer() #declaring snowballStemmer object

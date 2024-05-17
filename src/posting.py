@@ -1,4 +1,3 @@
-
 def str_to_posting(txt: str):
     content = txt.split('-')
     for i in range(2, len(content)):
@@ -29,24 +28,6 @@ class Posting: # This is the posting class that stores indexes information
     
     def reg_index(self):
         return self._reg_index
-    
-    # def to_dict(self):
-    #     return {
-    #         "wgt": self.weight(),
-    #         "docId": self.docId(),
-    #         "t_idx": self.head_index(),
-    #         "b_idx": self.bold_index(),
-    #         "r_idx": self.reg_index()
-    #     }
-    
-    # def to_list(self):
-    #     return [
-    #         self.docId(),
-    #         self.weight(),
-    #         self.head_index(),
-    #         self.bold_index(),
-    #         self.reg_index()
-    #     ]
     
     def __repr__(self):
         return (f"{self.docId()}-{self.weight()}-{','.join(str(i) for i in self.head_index())}-{','.join(str(i) for i in self.bold_index())}-{','.join(str(i) for i in self.reg_index())}")
