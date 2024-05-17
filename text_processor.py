@@ -46,6 +46,15 @@ def get_word_freq(tokens):
         word_freq_dict[token].append(index)
     return word_freq_dict
 
+def html_get_word_freq(token_lists):
+    word_freq_dict = {}
+    for wgt, token_list in enumerate(token_lists):
+        for index, token in enumerate(token_list):
+            if token not in word_freq_dict:
+                word_freq_dict[token] = [[], [], []]
+            word_freq_dict[token][wgt].append(index)
+    return word_freq_dict
+
 def simhash(tokens, hash_bits=128):
     V = [0] * hash_bits
     for word, all_presence in tokens.items():

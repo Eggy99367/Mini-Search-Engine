@@ -7,7 +7,7 @@ def get_file_size_in_kb(file_path):
     return size_in_kb
 
 def serialize_posting(idx):
-    return {key: [post.to_dict() for post in value] for key, value in idx.items()}
+    return {key: [post.to_list() for post in value] for key, value in idx.items()}
 
 def merge_index(idx_a, idx_b):
     for key, value in idx_b.items():
@@ -17,8 +17,12 @@ def merge_index(idx_a, idx_b):
             idx_a[key] += value
     return idx_a
 
+def check_int(s):
+    if s[0] in ('-', '+'):
+        return s[1:].isdigit()
+    return s.isdigit()
 
-def update_report(index, doc_count):
+def update_report(index, all_urls, doc_count):
 
     keyPositionDict = {}
     index = serialize_posting(index)
@@ -27,25 +31,26 @@ def update_report(index, doc_count):
             with open('result.txt', 'r') as file:
                 content = file.read()
                 index_from_disk = json.loads(content)
-                print(len(index_from_disk), len(index))
+                # print(len(index_from_disk), len(index))
                 index = merge_index(index_from_disk, index)
     except Exception:
         pass
 
-    with open('result.txt', 'w') as file: 
-        # start_index = 5
-        # for key, value in index.items():
-        #     for each_posting in value:
-        #         file.write(f"Key: {key}: {each_posting}")
-        #     keyPositionDict[key] = start_index
-        #     start_index = file.tell() + 1
-        #     file.write("\n")
+    with open('all_urls.txt', 'w') as file:
+        all_urls_text = json.dumps(all_urls)
+        file.write(all_urls_text)
+    
+    with open('words.txt', 'w') as file:
+        file.write(','.join([x for x in index if check_int(x)]))
+
+    with open('result.txt', 'w') as file:
         index_text = json.dumps(index)
         file.write(index_text)
     
     with open('report.txt', 'w') as file: 
         file.write(f"DocumentNum: {doc_count}\n")
         file.write(f"Number of Unique words: {len(index)}\n")
+        file.write(f"Number of Non Integer words: {len([x for x in index if not check_int(x)])}\n")
         file.write(f"size: {get_file_size_in_kb('result.txt')}KB\n")
 
     # with open("result.txt", 'r') as file:
