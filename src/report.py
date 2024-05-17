@@ -2,6 +2,7 @@ import os
 import json
 import re
 from .posting import *
+from .fetch import *
 
 def get_file_size_in_kb(file_path):
     size_in_bytes = os.path.getsize(file_path)
@@ -56,28 +57,15 @@ def update_report(index, all_urls, doc_count):
     with open('new_index.txt', 'w') as file:
         for token in sorted(index):
             file.write(f"[{token}]{'/'.join([str(p) for p in index[token]])}\n")
-    keyPositionList = merge_index("index.txt", "new_index.txt")
+    token_list = merge_index("index.txt", "new_index.txt")
     
     with open('words.txt', 'w') as file:
-        file.write(','.join(keyPositionList))
+        file.write(','.join(token_list))
     
     with open('report.txt', 'w') as file: 
         file.write(f"DocumentNum: {doc_count}\n")
-        file.write(f"Number of Unique words: {len(keyPositionList)}\n")
+        file.write(f"Number of Unique words: {len(token_list)}\n")
         file.write(f"size: {get_file_size_in_kb('index.txt')}KB\n")
-
-
-    return keyPositionList
-
-def fetch_token(record:str):
-    return re.search(r'\[(.*?)\]', record).group(1)
-
-def fetch_postings(record:str):
-    record = record.strip().split(']')[1]
-    posting_txts = record.split('/')
-    postings = [str_to_posting(txt) for txt in posting_txts]
-    return postings
-
 
 if __name__ == "__main__":
     # merge_index("index.txt", "new_index.txt")
