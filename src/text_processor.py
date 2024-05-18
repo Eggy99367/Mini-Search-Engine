@@ -1,12 +1,17 @@
 from porter2stemmer import Porter2Stemmer
 
+def isAlpNum(chr: str) -> bool:
+    #return true if the character is within the range of a-z A-Z or 0-9
+    return ord('a') <= ord(chr) <= ord('z') or ord('0') <= ord(chr) <= ord('9') or ord('A') <= ord(chr) <= ord('Z')
+
 def tokenize(text) -> {list, list}:
     porter2Stemmer1 = Porter2Stemmer() #declaring snowballStemmer object
     tokens = []
     stemmed_tokens = [] # Create a new list of stemmed tokens
     current_word = []
     for char in text:
-        if char.isalpha() or char.isdigit():
+        if isAlpNum(char):
+        # if char.isalpha() or char.isdigit():
             current_word.append(char)
         elif len(current_word) != 0:
             word = "".join(current_word).lower()

@@ -57,3 +57,9 @@ def get_docIds_by_token(token):
         return [p.docId() for p in get_postings(token)]
     except Exception:
         return []
+    
+def get_weights_by_token(token):
+    try:
+        return [p.weight() for p in get_postings(token)]
+    except Exception:
+        return []

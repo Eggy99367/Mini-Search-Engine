@@ -40,15 +40,15 @@ def build_inverted_index(directory_path: str):
     paths = list(iterate_files(directory_path))
     total_paths = len(paths)
     for path in paths:
-        document_id += 1
         if(not path.endswith(".json")):
             continue
+        document_id += 1
         with open(path, 'r', encoding="utf-8") as file:
             data = json.load(file)
             all_urls[document_id] = {"url": data['url'], "encoding": data['encoding']}
             file_content = data['content']
 
-        if '<!doctype html' in file_content.lower(): # check if the content is HTML content
+        if '<!DOCTYPE html>' in file_content[:1024] or '<html' in file_content[:1024]: # check if the content is HTML content
             parsedHTML = BeautifulSoup(file_content, 'html.parser')
 
             tokens, stemmed_tokens = seperate_tokens(parsedHTML)
@@ -56,13 +56,15 @@ def build_inverted_index(directory_path: str):
             
             index = html_add_in_dictionary(index, document_id, word_freq_dict)
             print(f"\r\x1b[Kprocess document #{document_id}/{total_paths} [html]", end="")
+        # elif '<?xml' in file_content[:1024] or '<' in file_content[:1024] and '/' in file_content[:1024]:
         else:
+            # print(path)
             result, stemmed_result = tokenize(file_content)
             word_freq_dict = get_word_freq(stemmed_result)
 
             add_in_dictionary(index, document_id, word_freq_dict)
             print(f"\r\x1b[Kprocess document #{document_id}/{total_paths}", end="")
-        if document_id % 10000 == 0:
+        if document_id % 5000 == 0:
             print(f"\r\x1b[Kprocess document #{document_id}/{total_paths} Updating to Disk...", end="")
             with Timer():
                 update_report(index, all_urls, document_id)
@@ -71,6 +73,3 @@ def build_inverted_index(directory_path: str):
     with Timer():
         update_report(index, all_urls, document_id)
         print("\r\x1b[K", end="")
-
-if __name__ == "__main__":
-    build_inverted_index("/Users/vince/Desktop/UCI/Sophomore/Spring 2024/ICS 121/Assignment3/Comp121_Assignment3/DEV")
