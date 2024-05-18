@@ -48,7 +48,8 @@ def build_inverted_index(directory_path: str):
             all_urls[document_id] = {"url": data['url'], "encoding": data['encoding']}
             file_content = data['content']
 
-        if '<!DOCTYPE html>' in file_content[:1024] or '<html' in file_content[:1024]: # check if the content is HTML content
+        # if '<!DOCTYPE html>' in file_content[:1024] or '<html' in file_content[:1024]: # check if the content is HTML content
+        if '<!doctype html' in file_content.lower():
             parsedHTML = BeautifulSoup(file_content, 'html.parser')
 
             tokens, stemmed_tokens = seperate_tokens(parsedHTML)
