@@ -13,14 +13,17 @@ def fetch_token_list(path):
 
 
 def fetch_token(record: str):
-    return re.search(r'\[(.*?)\]', record).group(1)
+    return re.search(r'\[(.*?)\]', record).group(1).split(":")[0]
+
+def fetch_freq(record: str):
+    return int(re.search(r'\[(.*?)\]', record).group(1).split(":")[1])
 
 
-def _fetch_postings(record: str):
+def fetch_postings(record: str):
     #print(record)
     record = record.strip().split(']')[1]
     posting_txts = record.split('/')
-    postings = [str_to_posting(txt) for txt in posting_txts]
+    postings = [txt.split(',') for txt in posting_txts]
     return postings
 
 
@@ -57,7 +60,7 @@ class fetcher:
 
     def get_postings(self, token):
         try:
-            return _fetch_postings(self.get_token_line(token))
+            return fetch_postings(self.get_token_line(token))
         except Exception:
             return []
 
