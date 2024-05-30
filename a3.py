@@ -25,45 +25,45 @@ if __name__ == "__main__":
         if not os.path.exists("all_urls.txt") or not os.path.exists("index.txt") or not os.path.exists("words.txt"):
             build_inverted_index("/Users/vince/Desktop/UCI/Sophomore/Spring 2024/ICS 121/Assignment3/Comp121_Assignment3/DEV")
 
-    # newFetcher = fetcher("all_urls.txt","words.txt")
-    # p2s = Porter2Stemmer()
+    newFetcher = fetcher("all_urls.txt", "words.txt", "updated_index.txt")
+    p2s = Porter2Stemmer()
 
-    # print("What do you want to search? (If you want to exit, type 'exit')")
-    # key = input()
-    # while key != "exit":
-    #     with Timer():
-    #         stemmed_tokens = []  # Create a new list of stemmed tokens
-    #         current_word = []
-    #         for char in key:
-    #             if isAlpNum(char):
-    #                 current_word.append(char)
-    #             elif len(current_word) != 0:
-    #                 word = "".join(current_word).lower()
-    #                 stemmed_tokens.append(p2s.stem(word))  # appending stemmed tokens
-    #                 current_word = []
-    #         if current_word:
-    #             word = "".join(current_word).lower()
-    #             stemmed_tokens.append(p2s.stem(word))
+    print("What do you want to search? (If you want to exit, type 'exit')")
+    key = input()
+    while key != "exit":
+        with Timer():
+            stemmed_tokens = []  # Create a new list of stemmed tokens
+            current_word = []
+            for char in key:
+                if isAlpNum(char):
+                    current_word.append(char)
+                elif len(current_word) != 0:
+                    word = "".join(current_word).lower()
+                    stemmed_tokens.append(p2s.stem(word))  # appending stemmed tokens
+                    current_word = []
+            if current_word:
+                word = "".join(current_word).lower()
+                stemmed_tokens.append(p2s.stem(word))
 
-    #         #get token sorted by freq
-    #         sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
-    #         if len(sortedToken)==1:
-    #             ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
-    #             print("The top five urls under this search:")
-    #             for idNum in ids[:5]:
-    #                 print(newFetcher.get_url_by_id(idNum))
-    #             print()
-    #         else:
-    #             curr_token = sortedToken[0][0]
-    #             ids = newFetcher.get_docIds_by_token(curr_token)
-    #             for index in range(1,len(sortedToken)):
-    #                 curr_token = sortedToken[index][0]
-    #                 ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
-    #             # Print the first five url that contains all token
-    #             print("The top five urls under this search:")
-    #             for idNum in ids[:5]:
-    #                 print(newFetcher.get_url_by_id(idNum))
-    #             print()
-    #     print("What do you want to search? (If you want to exit, type 'exit')")
-    #     key = input()
+            #get token sorted by freq
+            sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
+            if len(sortedToken)==1:
+                ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
+                print("The top five urls under this search:")
+                for idNum in ids[:5]:
+                    print(newFetcher.get_url_by_id(idNum))
+                print()
+            else:
+                curr_token = sortedToken[0][0]
+                ids = newFetcher.get_docIds_by_token(curr_token)
+                for index in range(1,len(sortedToken)):
+                    curr_token = sortedToken[index][0]
+                    ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
+                # Print the first five url that contains all token
+                print("The top five urls under this search:")
+                for idNum in ids[:5]:
+                    print(newFetcher.get_url_by_id(idNum))
+                print()
+        print("What do you want to search? (If you want to exit, type 'exit')")
+        key = input()
 

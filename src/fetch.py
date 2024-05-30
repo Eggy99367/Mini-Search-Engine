@@ -2,10 +2,9 @@ import json, re
 from .posting import *
 
 
-def fetch_urls(path):
+def fetch_json(path):
     with open(path, 'r') as file:
         return json.loads(file.read())
-
 
 def fetch_token_list(path):
     with open(path, 'r') as file:
@@ -23,38 +22,44 @@ def fetch_postings(record: str):
     #print(record)
     record = record.strip().split(']')[1]
     posting_txts = record.split('/')
-    postings = [txt.split(',') for txt in posting_txts]
+    postings = []
+    for txt in posting_txts:
+        txt = txt.split(',')
+        postings.append([int(txt[0]), float(txt[1])])
     return postings
 
 
 class fetcher:
-    def __init__(self, urls_path, tokens_path):
-        self.urls_dict = fetch_urls(urls_path)
-        self.token_list = fetch_token_list(tokens_path)
+    def __init__(self, urls_path, words_path, tokens_path):
+        self.urls_dict = fetch_json(urls_path)
+        self.word_dict = fetch_json(words_path)
+        self.tokens_path = tokens_path
+        # self.token_list = fetch_token_list(tokens_path)
 
     # input a docID, return the url
     def get_url_by_id(self, docId) -> str:
         return self.urls_dict[str(docId)]["url"]
+    
+    def _get_token_index(self, token: str):
+        if token in self.word_dict:
+            return int(self.word_dict[token])
+        return -1
 
     # input the docID, get the encoding of the doc
     def get_url_encoding_by_id(self, docId) -> str:
         return self.urls_dict[str(docId)]["encoding"]
 
-    def _get_token_line_number(self, token: str) -> int:
-        return self.token_list.index(token) + 1
-
-    def _get_line(self, path, line_number):
-        with open(path, 'r') as file:
-            for line_num, line in enumerate(file, start=1):
-                if line_num == line_number:
-                    return line.strip()
-
     def get_token_line(self, token):
-        return self._get_line("index.txt", self._get_token_line_number(token))
+        token_index = self._get_token_index(token)
+        if token_index == -1:
+            return -1
+        with open(self.tokens_path, 'r') as file:
+            file.seek(token_index)
+            return file.readline().strip()
 
     def get_token_freq(self, token):
         try:
-            return len(self.get_token_line(token).split('/'))
+            return int(self.get_token_line(token).split(']')[0].split(":")[1])
         except Exception:
             return 0
 
@@ -67,13 +72,6 @@ class fetcher:
 
     def get_docIds_by_token(self, token):
         try:
-            return [p.docId() for p in self.get_postings(token)]
-        except Exception:
-            return []
-
-
-    def get_weights_by_token(self, token):
-        try:
-            return [p.weight() for p in self.get_postings(token)]
+            return [p[0] for p in self.get_postings(token)]
         except Exception:
             return []

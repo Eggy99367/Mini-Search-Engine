@@ -56,8 +56,9 @@ def build_inverted_index(directory_path: str):
             print(f"\r\x1b[Kprocess document #{doc_id}/{total_paths} [html]", end="")
             parsedHTML = BeautifulSoup(file_content, 'html.parser')
             for element in parsedHTML.find_all():
-                _, stemmed_token = tokenize(element.text)
-                stemmed_tokens += stemmed_token
+                if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'strong', 'p']:
+                    _, stemmed_token = tokenize(element.text)
+                    stemmed_tokens += stemmed_token
         # elif '<?xml' in file_content[:1024] or '<' in file_content[:1024] and '/' in file_content[:1024]:
         else:
             print(f"\r\x1b[Kprocess document #{doc_id}/{total_paths}", end="")
