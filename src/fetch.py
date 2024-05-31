@@ -36,6 +36,13 @@ class fetcher:
         self.tokens_path = tokens_path
         # self.token_list = fetch_token_list(tokens_path)
 
+    def __enter__(self):
+        self.token_file = open(self.tokens_path, 'r')
+        return self
+
+    def __exit__(self, *args):
+        self.token_file.close()
+
     # input a docID, return the url
     def get_url_by_id(self, docId) -> str:
         return self.urls_dict[str(docId)]["url"]
@@ -53,9 +60,8 @@ class fetcher:
         token_index = self._get_token_index(token)
         if token_index == -1:
             return -1
-        with open(self.tokens_path, 'r') as file:
-            file.seek(token_index)
-            return file.readline().strip()
+        self.token_file.seek(token_index)
+        return self.token_file.readline().strip()
 
     def get_token_freq(self, token):
         try:

@@ -25,48 +25,47 @@ if __name__ == "__main__":
         if not os.path.exists("all_urls.txt") or not os.path.exists("index.txt") or not os.path.exists("words.txt"):
             build_inverted_index("/Users/vince/Desktop/UCI/Sophomore/Spring 2024/ICS 121/Assignment3/Comp121_Assignment3/DEV")
 
-    newFetcher = fetcher("all_urls.txt", "words.txt", "updated_index.txt")
-    p2s = Porter2Stemmer()
+    with fetcher("all_urls.txt", "words.txt", "updated_index.txt") as newFetcher:
+        p2s = Porter2Stemmer()
+        # result = compute_cosine_score(newFetcher, ["class", "ics"])
 
-    # result = compute_cosine_score(newFetcher, ["class", "ics"])
-
-    print("What do you want to search? (If you want to exit, type 'exit')")
-    key = input()
-    while key != "exit":
-        with Timer():
-            stemmed_tokens = []  # Create a new list of stemmed tokens
-            current_word = []
-            for char in key:
-                if isAlpNum(char):
-                    current_word.append(char)
-                elif len(current_word) != 0:
-                    word = "".join(current_word).lower()
-                    stemmed_tokens.append(p2s.stem(word))  # appending stemmed tokens
-                    current_word = []
-            if current_word:
-                word = "".join(current_word).lower()
-                stemmed_tokens.append(p2s.stem(word))
-
-            #get token sorted by freq
-            sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
-            if len(sortedToken)==1:
-                ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
-                print("The top ten urls under this search:")
-                result = compute_cosine_score(newFetcher, stemmed_tokens)
-            else:
-                # curr_token = sortedToken[0][0]
-                # ids = newFetcher.get_docIds_by_token(curr_token)
-                # for index in range(1,len(sortedToken)):
-                #     curr_token = sortedToken[index][0]
-                #     ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
-                # Print the first five url that contains all token
-                print("The top ten urls under this search:")
-                # for idNum in ids[:10]:
-                #     print(newFetcher.get_url_by_id(idNum))
-                result = compute_cosine_score(newFetcher, stemmed_tokens)
-            for each_score in result:
-                print(newFetcher.get_url_by_id(each_score[0]))
-            print()
         print("What do you want to search? (If you want to exit, type 'exit')")
         key = input()
+        while key != "exit":
+            with Timer():
+                stemmed_tokens = []  # Create a new list of stemmed tokens
+                current_word = []
+                for char in key:
+                    if isAlpNum(char):
+                        current_word.append(char)
+                    elif len(current_word) != 0:
+                        word = "".join(current_word).lower()
+                        stemmed_tokens.append(p2s.stem(word))  # appending stemmed tokens
+                        current_word = []
+                if current_word:
+                    word = "".join(current_word).lower()
+                    stemmed_tokens.append(p2s.stem(word))
+
+                #get token sorted by freq
+                sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
+                if len(sortedToken)==1:
+                    ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
+                    print("The top ten urls under this search:")
+                    result = compute_cosine_score(newFetcher, stemmed_tokens)
+                else:
+                    # curr_token = sortedToken[0][0]
+                    # ids = newFetcher.get_docIds_by_token(curr_token)
+                    # for index in range(1,len(sortedToken)):
+                    #     curr_token = sortedToken[index][0]
+                    #     ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
+                    # Print the first five url that contains all token
+                    print("The top ten urls under this search:")
+                    # for idNum in ids[:10]:
+                    #     print(newFetcher.get_url_by_id(idNum))
+                    result = compute_cosine_score(newFetcher, stemmed_tokens)
+                for each_score in result:
+                    print(newFetcher.get_url_by_id(each_score[0]))
+                print()
+            print("What do you want to search? (If you want to exit, type 'exit')")
+            key = input()
 
