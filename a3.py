@@ -45,24 +45,7 @@ if __name__ == "__main__":
                 if current_word:
                     word = "".join(current_word).lower()
                     stemmed_tokens.append(p2s.stem(word))
-
-                #get token sorted by freq
-                sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
-                if len(sortedToken)==1:
-                    ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
-                    print("The top ten urls under this search:")
-                    result = compute_cosine_score(newFetcher, stemmed_tokens)
-                else:
-                    # curr_token = sortedToken[0][0]
-                    # ids = newFetcher.get_docIds_by_token(curr_token)
-                    # for index in range(1,len(sortedToken)):
-                    #     curr_token = sortedToken[index][0]
-                    #     ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
-                    # Print the first five url that contains all token
-                    print("The top ten urls under this search:")
-                    # for idNum in ids[:10]:
-                    #     print(newFetcher.get_url_by_id(idNum))
-                    result = compute_cosine_score(newFetcher, stemmed_tokens)
+                result = data_processing(stemmed_tokens, newFetcher)
                 for each_score in result:
                     print(newFetcher.get_url_by_id(each_score[0]))
                 print()

@@ -1,7 +1,3 @@
-import math
-from collections import defaultdict
-
-
 stopwords = ["0o", "0s", "3a", "3b", "3d", "6b", "6o", "a", 
              "a1", "a2", "a3", "a4", "ab", "able", "about", 
              "above", "abst", "ac", "accordance", "according", 
@@ -73,62 +69,3 @@ stopwords = ["0o", "0s", "3a", "3b", "3d", "6b", "6o", "a",
             "shown", "showns", "shows", "si", "side", "significant", "significantly", "similar", "similarly", "since", "sincere", "six", "sixty", "sj", "sl", "slightly", "sm", "sn", "so", "some", "somebody", "somehow", "someone", "somethan", "something", "sometime", "sometimes", "somewhat", "somewhere", "soon", "sorry", "sp", "specifically", "specified", "specify", "specifying", "sq", "sr", "ss", "st", "still", "stop", "strongly", "sub", "substantially", "successfully", "such", "sufficiently", "suggest", "sup", "sure", "sy", "system", "sz", "t", "t1", "t2", "t3", "take", "taken", "taking", "tb", "tc", "td", "te", "tell", "ten", "tends", "tf", "th", "than", "thank", "thanks", "thanx", "that", "that'll", "thats", "that's", "that've", "the", "their", "theirs", "them", "themselves", "then", "thence", "there", "thereafter", "thereby", "thered", "therefore", "therein", "there'll", "thereof", "therere", "theres", "there's", "thereto", 
             "thereupon", "there've", "these", "they", "theyd", "they'd", "they'll", "theyre", "they're", "they've", "thickv", "thin", "think", "third", "this", "thorough", "thoroughly", "those", "thou", "though", "thoughh", "thousand", "three", "throug", "through", "throughout", "thru", "thus", "ti", "til", "tip", "tj", "tl", "tm", "tn", "to", "together", "too", "took", "top", "toward", "towards", "tp", "tq", "tr", "tried", "tries", "truly", "try", "trying", "ts", "t's", "tt", "tv", "twelve", "twenty", "twice", "two", "tx", "u", "u201d", "ue", "ui", "uj", "uk", "um", "un", "under", "unfortunately", "unless", "unlike", "unlikely", "until", "unto", "uo", "up", "upon", "ups", "ur", "us", "use", "used", "useful", "usefully", "usefulness", "uses", "using", "usually", "ut", "v", "va", "value", "various", "vd", "ve", "ve", "very", "via", "viz", "vj", "vo", "vol", "vols", "volumtype", "vq", "vs", "vt", "vu", "w", "wa", "want", "wants", "was", "wasn", "wasnt", 
             "wasn't", "way", "we", "wed", "we'd", "welcome", "well", "we'll", "well-b", "went", "were", "we're", "weren", "werent", "weren't", "we've", "what", "whatever", "what'll", "whats", "what's", "when", "whence", "whenever", "when's", "where", "whereafter", "whereas", "whereby", "wherein", "wheres", "where's", "whereupon", "wherever", "whether", "which", "while", "whim", "whither", "who", "whod", "whoever", "whole", "who'll", "whom", "whomever", "whos", "who's", "whose", "why", "why's", "wi", "widely", "will", "willing", "wish", "with", "within", "without", "wo", "won", "wonder", "wont", "won't", "words", "world", "would", "wouldn", "wouldnt", "wouldn't", "www", "x", "x1", "x2", "x3", "xf", "xi", "xj", "xk", "xl", "xn", "xo", "xs", "xt", "xv", "xx", "y", "y2", "yes", "yet", "yj", "yl", "you", "youd", "you'd", "you'll", "your", "youre", "you're", "yours", "yourself", "yourselves", "you've", "yr", "ys", "yt", "z", "zero", "zi", "zz",]
-
-
-
-
-def compute_each_score(scores: list, length: list, list_of_postings: list, query_weight: float, relevent_docs, fetcher, token): # adding each score of posting object
-    for each_posting in list_of_postings:
-        first_values = [sublist[0] for sublist in scores]
-        cosine_weight = each_posting[1] * query_weight
-        if each_posting[0] in first_values:
-            index = first_values.index(each_posting[0])
-            scores[index][1] += cosine_weight
-        else:
-            scores.append([each_posting[0], cosine_weight])
-            get_freq_of_each_term(length, fetcher.get_token_freq(token))
-
-
-def compute_query_weight(length_of_query: int, keyword_count: int): # get the weight for the query (Wtq)
-    return math.log(length_of_query / keyword_count)
-
-def get_freq_of_each_term(length: list, token_freq: int):
-    if(token_freq > 0):
-        length.append(token_freq)
-
-def compute_cosine_score(fetcher, list_of_keywords: list):
-    scores = [] # score for each document
-    length = [] # freq for each document
-    
-    # Dictionary to count occurrences of each document ID
-    doc_count = defaultdict(int)
-    
-    # Intermediate storage for postings
-    postings_dict = {}
-    
-    # Count occurrences of each document ID
-    for each_token in list_of_keywords:
-        postings = fetcher.get_postings(each_token)
-        postings_dict[each_token] = postings
-        for doc_id, _ in postings:
-            doc_count[doc_id] += 1
-
-    # Filter documents that appear in at least 3 out of the 4 keywords
-    relevant_docs = {doc_id for doc_id, count in doc_count.items() if count >= len(list_of_keywords)}
-
-    # Calculate scores for relevant documents
-    for each_token in list_of_keywords:
-        if each_token in stopwords:
-            continue
-        query_weight = compute_query_weight(55393, list_of_keywords.count(each_token))
-        postings = [value for value in postings_dict[each_token] if value[0] in relevant_docs]
-        compute_each_score(scores, length, postings, query_weight, relevant_docs, fetcher, each_token)
-
-    for each_score, each_length in zip(scores, length):
-        each_score[1] = each_score[1] / each_length
-    
-    # Sort the scores in descending order
-    scores = sorted(scores, key=lambda x: x[1], reverse=True)
-
-    # Print the top 10 URLs
-    return scores[:10]
