@@ -25,7 +25,7 @@ def fetch_postings(record: str):
     postings = []
     for txt in posting_txts:
         txt = txt.split(',')
-        postings.append([int(txt[0]), float(txt[1])])
+        postings.append([int(txt[0]), float(txt[1]), int(txt[2])])
     return postings
 
 

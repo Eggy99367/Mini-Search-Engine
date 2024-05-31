@@ -63,7 +63,7 @@ def update_report(index, all_urls, doc_count):
 
     with open('new_index.txt', 'w') as file:
         for token in sorted(index):
-            postings = '/'.join([f"{p[0]},{p[1]}" for p in index[token]])
+            postings = '/'.join([f"{p[0]},{p[1]},{p[2]}" for p in index[token]])
             file.write(f"[{token}:{len(index[token])}]{postings}\n")
     token_list, word_pos_dict = merge_index("index.txt", "new_index.txt")
 

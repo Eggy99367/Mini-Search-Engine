@@ -43,9 +43,11 @@ def seperate_tokens(parsedHTML):
 def get_word_freq(tokens):
     word_freq_dict = {}
     for token in tokens:
-        if token not in word_freq_dict:
-            word_freq_dict[token] = 0
-        word_freq_dict[token] += 1
+        if token[0] not in word_freq_dict:
+            word_freq_dict[token[0]] = [0, 0]
+        word_freq_dict[token[0]][0] += 1
+        if token[1]:
+            word_freq_dict[token[0]][1] = 1
     return word_freq_dict
 
 def html_get_word_freq(token_lists):

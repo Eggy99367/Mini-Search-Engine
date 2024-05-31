@@ -15,22 +15,22 @@ def iterate_files(directory):
             yield file_path
 
 def add_in_dictionary(index, doc_id, stemmed_dict):
-    for token, freq in stemmed_dict.items():
+    for token, info in stemmed_dict.items():
         if token not in index:
             index[token] = []
-        index[token].append((doc_id, freq))
+        index[token].append((doc_id, info[0], info[1]))
     return index
 
-def html_add_in_dictionary(index, doc_id, stemmed_dict):
-    weight = 0
-    wgt_list = [10, 3, 1]
-    for token, idxs_list in stemmed_dict.items():
-        for list_idx, idxs in enumerate(idxs_list):
-            weight += len(idxs) * wgt_list[list_idx]
-        if token not in index:
-            index[token] = []
-        index[token].append(Posting(doc_id, weight, *idxs_list))
-    return index
+# def html_add_in_dictionary(index, doc_id, stemmed_dict):
+#     weight = 0
+#     wgt_list = [10, 3, 1]
+#     for token, idxs_list in stemmed_dict.items():
+#         for list_idx, idxs in enumerate(idxs_list):
+#             weight += len(idxs) * wgt_list[list_idx]
+#         if token not in index:
+#             index[token] = []
+#         index[token].append(Posting(doc_id, weight, *idxs_list))
+#     return index
 
 def build_inverted_index(directory_path: str):
     index = {}
@@ -56,13 +56,17 @@ def build_inverted_index(directory_path: str):
             print(f"\r\x1b[Kprocess document #{doc_id}/{total_paths} [html]", end="")
             parsedHTML = BeautifulSoup(file_content, 'html.parser')
             for element in parsedHTML.find_all():
+                is_important = False
+                if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'strong']:
+                    is_important = True
                 if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'strong', 'p']:
                     _, stemmed_token = tokenize(element.text)
-                    stemmed_tokens += stemmed_token
+                    stemmed_tokens += [[t, is_important] for t in stemmed_token]
         # elif '<?xml' in file_content[:1024] or '<' in file_content[:1024] and '/' in file_content[:1024]:
         else:
             print(f"\r\x1b[Kprocess document #{doc_id}/{total_paths}", end="")
             _, stemmed_tokens = tokenize(file_content)
+            stemmed_tokens = [[t, is_important] for t in stemmed_tokens]
 
         word_freq_dict = get_word_freq(stemmed_tokens)
         add_in_dictionary(index, doc_id, word_freq_dict)
@@ -97,11 +101,11 @@ def transform_index(total_docs):
 
                 temp_const = math.log(total_docs / freq)
                 for post in postings:
-                    post = [int(post[0]), float(post[1])]
-                    weight = (1 + math.log(post[1])) * temp_const
+                    post = [int(post[0]), float(post[1]), post[2]]
+                    weight = (1 + math.log(post[1]))
                     post[1] = weight
                     new_postings.append(post)
-                postings_text = '/'.join([f"{p[0]},{p[1]:.3f}" for p in new_postings])
+                postings_text = '/'.join([f"{p[0]},{p[1]:.3f},{p[2]}" for p in new_postings])
                 updated_index.write(f"[{token}:{freq}]{postings_text}\n")
                 line = index.readline()
     
