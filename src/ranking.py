@@ -116,7 +116,6 @@ def compute_cosine_score(fetcher, list_of_keywords: list):
     # Filter documents that appear in at least 3 out of the 4 keywords
     relevant_docs = {doc_id for doc_id, count in doc_count.items() if count >= len(list_of_keywords)}
 
-    value1 = 0
     # Calculate scores for relevant documents
     for each_token in list_of_keywords:
         if each_token in stopwords:
@@ -132,5 +131,4 @@ def compute_cosine_score(fetcher, list_of_keywords: list):
     scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
     # Print the top 10 URLs
-    for each_score in scores[:10]:
-        print(fetcher.get_url_by_id(each_score[0]))
+    return scores[:10]

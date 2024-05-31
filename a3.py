@@ -52,8 +52,7 @@ if __name__ == "__main__":
             if len(sortedToken)==1:
                 ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
                 print("The top ten urls under this search:")
-                compute_cosine_score(newFetcher, stemmed_tokens)
-                print()
+                result = compute_cosine_score(newFetcher, stemmed_tokens)
             else:
                 # curr_token = sortedToken[0][0]
                 # ids = newFetcher.get_docIds_by_token(curr_token)
@@ -64,8 +63,10 @@ if __name__ == "__main__":
                 print("The top ten urls under this search:")
                 # for idNum in ids[:10]:
                 #     print(newFetcher.get_url_by_id(idNum))
-                compute_cosine_score(newFetcher, stemmed_tokens)
-                print()
+                result = compute_cosine_score(newFetcher, stemmed_tokens)
+            for each_score in result:
+                print(newFetcher.get_url_by_id(each_score[0]))
+            print()
         print("What do you want to search? (If you want to exit, type 'exit')")
         key = input()
 
