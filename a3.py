@@ -28,6 +28,8 @@ if __name__ == "__main__":
     newFetcher = fetcher("all_urls.txt", "words.txt", "updated_index.txt")
     p2s = Porter2Stemmer()
 
+    # result = compute_cosine_score(newFetcher, ["class", "ics"])
+
     print("What do you want to search? (If you want to exit, type 'exit')")
     key = input()
     while key != "exit":
@@ -49,20 +51,20 @@ if __name__ == "__main__":
             sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
             if len(sortedToken)==1:
                 ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
-                print("The top five urls under this search:")
-                for idNum in ids[:5]:
-                    print(newFetcher.get_url_by_id(idNum))
+                print("The top ten urls under this search:")
+                compute_cosine_score(newFetcher, stemmed_tokens)
                 print()
             else:
-                curr_token = sortedToken[0][0]
-                ids = newFetcher.get_docIds_by_token(curr_token)
-                for index in range(1,len(sortedToken)):
-                    curr_token = sortedToken[index][0]
-                    ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
+                # curr_token = sortedToken[0][0]
+                # ids = newFetcher.get_docIds_by_token(curr_token)
+                # for index in range(1,len(sortedToken)):
+                #     curr_token = sortedToken[index][0]
+                #     ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
                 # Print the first five url that contains all token
-                print("The top five urls under this search:")
-                for idNum in ids[:5]:
-                    print(newFetcher.get_url_by_id(idNum))
+                print("The top ten urls under this search:")
+                # for idNum in ids[:10]:
+                #     print(newFetcher.get_url_by_id(idNum))
+                compute_cosine_score(newFetcher, stemmed_tokens)
                 print()
         print("What do you want to search? (If you want to exit, type 'exit')")
         key = input()
