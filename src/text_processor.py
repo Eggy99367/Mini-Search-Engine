@@ -1,4 +1,6 @@
 from porter2stemmer import Porter2Stemmer
+import hashlib
+import math
 
 def isAlpNum(chr: str) -> bool:
     #return true if the character is within the range of a-z A-Z or 0-9
@@ -23,23 +25,6 @@ def tokenize(text) -> {list, list}:
         tokens.append(word)
     return tokens, stemmed_tokens
 
-def seperate_tokens(parsedHTML):
-    tokens = [[], [], []]
-    stemmed_tokens = [[], [], []]
-    for element in parsedHTML.find_all():
-        index = None
-        if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']: # heading
-            index = 0
-        elif element.name in ['b', 'strong']:# bolds and strongs
-            index = 1
-        elif element.name in ['p']:  # Exclude links include body
-            index = 2
-        if index is not None:
-            tmpTokens, tmpStemmedTokens = tokenize(element.text)
-            tokens[index] += tmpTokens
-            stemmed_tokens[index] += tmpStemmedTokens
-    return tokens, stemmed_tokens
-
 def get_word_freq(tokens):
     word_freq_dict = {}
     for token in tokens:
@@ -48,16 +33,53 @@ def get_word_freq(tokens):
         word_freq_dict[token[0]][0] += 1
         if token[1]:
             word_freq_dict[token[0]][1] = 1
+
+    sqr_sum = 0
+    for token, info in word_freq_dict.items():
+        word_freq_dict[token] = [(1 + math.log(info[0])) * info[1], info[0]]
+        sqr_sum += word_freq_dict[token][0] ** 2
+
+    stand_div = math.sqrt(sqr_sum)
+
+    for token, info in word_freq_dict.items():
+        word_freq_dict[token] = [info[0] / stand_div, info[0], info[1]]
     return word_freq_dict
 
-def html_get_word_freq(token_lists):
-    word_freq_dict = {}
-    for wgt, token_list in enumerate(token_lists):
-        for index, token in enumerate(token_list):
-            if token not in word_freq_dict:
-                word_freq_dict[token] = [[], [], []]
-            word_freq_dict[token][wgt].append(index)
-    return word_freq_dict
+def simhash(tokens, hash_bits=128):
+    tokens = {t: i[2] for t, i in tokens.items()}
+    V = [0] * hash_bits
+    for word, count in tokens.items():
+        hash_value = int(hashlib.md5(word.encode('utf-8')).hexdigest(), 16)
+        for i in range(hash_bits):
+            # extracts the value of the i-th bit from the right of hash_value
+            bit = (hash_value >> i) & 1
+            if bit == 1:
+                V[i] += count
+            else:
+                V[i] -= count
+    fingerprint = 0
+    for i in range(hash_bits):
+        if V[i] >= 0:
+            # sets the i-th bit of fingerprint to 1 without affecting the other bits
+            fingerprint |= (1 << i)
+    return fingerprint
+
+def are_similar(fingerprint_a, fingerprint_b, threshold, hash_bits=128):
+    # XOR to find differing bits
+    differing_bits = fingerprint_a ^ fingerprint_b
+
+    # Count the number of same bits
+    same_bits = hash_bits - bin(differing_bits).count('1')
+
+    # Calculate similarity as the fraction of bits that are the same
+    similarity = same_bits / hash_bits
+    return similarity >= threshold
+
+def is_new_fingerprint(new_fingerprint, fingerprints):
+    for value in fingerprints:
+        if are_similar(new_fingerprint, value, 0.93):
+            return False
+    return True
 
 if __name__ == "__main__":
     pass
