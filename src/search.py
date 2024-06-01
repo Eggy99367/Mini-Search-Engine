@@ -1,7 +1,7 @@
 import math
 from collections import defaultdict
-
-
+import heapq
+import numpy as np
 
 #take two docID list as input, return common docIDs
 def intersect(posting1, posting2):
@@ -20,180 +20,100 @@ def intersect(posting1, posting2):
                 p2 += 1
     return answer
 
-# need to fix here
-def compute_each_score(scores: list, length: list, list_of_postings: list, query_weight: float, fetcher, token): # adding each score of posting object
-    for each_posting in list_of_postings:
-        first_values = [sublist[0] for sublist in scores]
-        cosine_weight = each_posting[1] * query_weight
-        if each_posting[0] in first_values:
-            index = first_values.index(each_posting[0])
-            scores[index][1] += cosine_weight
-        else:
-            scores.append([each_posting[0], cosine_weight])
-            get_freq_of_each_term(length, fetcher.get_token_freq(token))
+# compute cosine score
+def compute_cosine_score(newFetcher, termList:list, query_count: dict, doc_count:dict, N:int):
+    scores = np.zeros(N)
 
-# need to fix here
-def compute_query_weight(length_of_query: int, keyword_count: int): # get the weight for the query (Wtq)
-    # return math.log(length_of_query / keyword_count)
-    return 1
+    for t in termList:
+        doc_dict = doc_count[t]
+        top_doc = heapq.nlargest(50, doc_dict.items(), key=lambda x: x[1])
+        for doc in top_doc:
+            scores[doc[0]] += doc[1]*query_count[t]
 
-def get_freq_of_each_term(length: list, token_freq: int):
-    if(token_freq > 0):
-        length.append(token_freq)
+    top_urls = np.argsort(-scores)[:10]
 
-def compute_cosine_score(fetcher, list_of_keywords: list, ids:list, all_postings: list):
-    scores = [] # score for each document
-    length = [] # freq for each document
+    urlList = []
+    scoreList = []
 
-
-    # Dictionary to count occurrences of each document ID
-    doc_count = defaultdict(int)
-    
-    # Intermediate storage for postings
-    postings_dict = {}
-    
-    # Count occurrences of each document ID
-    # for each_token in list_of_keywords:
-    #     postings = fetcher.get_postings(each_token)
-    #     postings_dict[each_token] = postings
-    #     for doc_id, _ in postings:
-    #         doc_count[doc_id] += 1
-    for each_docID in set(ids):
-        doc_count[each_docID] = all_postings.count(each_docID)
-    
-
-    
-    for each_token in list_of_keywords:
-        postings = fetcher.get_postings(each_token)
-        postings_dict[each_token] = postings
-
-    # Filter out documents that have less than number of keyword list occurrences
-    filtered_doc_count = {doc_id: count for doc_id, count in doc_count.items() if count >= len(list_of_keywords)}
-    # Filter documents that appear in at least 4 out of the 4 keywords
-    relevant_docs = {doc_id for doc_id in filtered_doc_count}
-
-
-    # If the number of relevant documents is less than or equal to 50, switch to 75% of the keywords
-    if len(relevant_docs) <= 50:
-        required_keywords = math.ceil(0.75 * len(list_of_keywords))
-        filtered_doc_count = {doc_id: count for doc_id, count in doc_count.items() if count >= required_keywords}
-        relevant_docs = {doc_id for doc_id in filtered_doc_count}
-
-
-    # Calculate scores for every keyword documents
-    for each_token in postings_dict:
-        if each_token in stopwords:
-            continue
-        query_weight = compute_query_weight(55393, list_of_keywords.count(each_token))
-        postings = [value for value in postings_dict[each_token] if value[0] in relevant_docs]
-        compute_each_score(scores, length, postings, query_weight, fetcher, each_token)
-
-    for each_score, each_length in zip(scores, length):
-        each_score[1] = each_score[1] / each_length
-    
-    # Sort the scores in descending order
-    scores = sorted(scores, key=lambda x: x[1], reverse=True)
+    for url in top_urls:
+        urlList.append(newFetcher.get_url_by_id(url))
+        scoreList.append(scores[url])
 
     # # Print the top 10 URLs
-    return scores[:10]
+    return urlList, scoreList
+
 
 def data_processing(stemmed_tokens, newFetcher):
+    # Dictionary to count occurrences of each query term
+    query_count = defaultdict(int)
+    for token in stemmed_tokens:
+        query_count[token] += 1
+
+    # Get term list
+    termList = list(query_count.keys())
+
+    # Get the total number of documents
+    N = newFetcher.get_url_size()
+
+    # Calculate tf-idf for query
+    for token in query_count:
+        query_count[token] = (1 + math.log10(query_count[token])) * math.log10(N / newFetcher.get_token_freq(token))
+
+    # Calculate the query length
+    queryLength = 0
+    for token in query_count:
+        queryLength += math.pow(query_count[token], 2)
+    queryLength = math.sqrt(queryLength)
+
+    # Last step, calculate normalized tf-idf for query
+    for token in query_count:
+        query_count[token] = query_count[token]/queryLength
+
     #get token sorted by freq
-    sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
-    # print(sortedToken)
-    list_of_all_postings = []
-    if len(sortedToken)==1:
-        ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
-        list_of_all_postings += ids
-        print("The top ten urls under this search:")
-        result = compute_cosine_score(newFetcher, stemmed_tokens, ids, list_of_all_postings)
+    sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in query_count], key=(lambda x: x[1]))
+
+    # One term query
+    if len(sortedToken) == 1:
+        doc_count = {sortedToken[0][0]: newFetcher.get_posting_info_by_token(sortedToken[0][0])}
+        result, score = compute_cosine_score(newFetcher, termList, query_count, doc_count, N)
+    # Two or more terms query
     else:
         curr_token = sortedToken[0][0]
         ids = newFetcher.get_docIds_by_token(curr_token)
-        list_of_all_postings += ids
-        for index in range(1,len(sortedToken)):
+        for index in range(1, len(sortedToken)):
             curr_token = sortedToken[index][0]
             ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
-            list_of_all_postings += newFetcher.get_docIds_by_token(curr_token)
-        # Print the first five url that contains all token
-        print("The top ten urls under this search:")
-        # for idNum in ids[:10]:
-        #     print(newFetcher.get_url_by_id(idNum))
-        result = compute_cosine_score(newFetcher, stemmed_tokens, ids, list_of_all_postings)
-    
-    return result
+
+        # Enough document for conjunctive search
+        if len(ids) >= 50:
+            doc_count = {}
+            for token in sortedToken:
+                doc_count[token[0]] = newFetcher.get_posting_info_by_token_docID(token[0], ids)
+            result, score = compute_cosine_score(newFetcher, termList, query_count, doc_count, N)
+        # Not enough document for conjunctive search
+        else:
+            doc_count = {}
+            for token in sortedToken:
+                doc_count[token[0]] = newFetcher.get_posting_info_by_token(token[0])
+            result, score = compute_cosine_score(newFetcher, termList, query_count, doc_count, N)
+
+    return result, score
 
 
-
-
-stopwords = ["0o", "0s", "3a", "3b", "3d", "6b", "6o", "a", 
-             "a1", "a2", "a3", "a4", "ab", "able", "about", 
-             "above", "abst", "ac", "accordance", "according", 
-             "accordingly", "across", "act", "actually", "ad", 
-             "added", "adj", "ae", "af", "affected", "affecting"
-             , "affects", "after", "afterwards", "ag", "again", 
-             "against", "ah", "ain", "ain't", "aj", "al", "all", 
-             "allow", "allows", "almost", "alone", "along", 
-             "already", "also", "although", "always", "am", 
-             "among", "amongst", "amoungst", "amount", "an", 
-             "and", "announce", "another", "any", "anybody", 
-             "anyhow", "anymore", "anyone", "anything", 
-             "anyway", "anyways", "anywhere", "ao", "ap", 
-             "apart", "apparently", "appear", "appreciate", 
-             "appropriate", "approximately", "ar", "are", "aren", "arent", "aren't", "arise", "around", "as", "a's", 
-             "aside", "ask", "asking", "associated", "at", "au", "auth", 
-             "av", "available", "aw", "away", "awfully", "ax", "ay", 
-             "az", "b", "b1", "b2", "b3", "ba", "back", "bc", "bd", 
-             "be", "became", "because", "become", "becomes", "becoming", 
-             "been", "before", "beforehand", "begin", "beginning", 
-             "beginnings", "begins", "behind", "being", "believe", 
-             "below", "beside", "besides", "best", "better", "between", 
-             "beyond", "bi", "bill", "biol", "bj", "bk", "bl", "bn", 
-             "both", "bottom", "bp", "br", "brief", "briefly", "bs", 
-             "bt", "bu", "but", "bx", "by", "c", "c1", "c2", "c3", "ca", 
-             "call", "came", "can", "cannot", "cant", "can't", "cause", 
-             "causes", "cc", "cd", "ce", "certain", "certainly", "cf", 
-             "cg", "ch", "changes", "ci", "cit", "cj", "cl", 
-             "clearly", "cm", "c'mon", "cn", "co", "com", 
-             "come", "comes", "con", "concerning", 
-             "consequently", "consider", "considering", 
-             "contain", "containing", "contains", 
-             "corresponding", "could", "couldn", "couldnt", 
-             "couldn't", "course", "cp", "cq", "cr", "cry", 
-             "cs", "c's", "ct", "cu", "currently", "cv", "cx", 
-             "cy", "cz", "d", "d2", "da", "date", "dc", "dd", 
-             "de", "definitely", "describe", "described", 
-             "despite", "detail", "df", "di", "did", "didn", 
-             "didn't", "different", "dj", "dk", "dl", "do", 
-             "does", "doesn", "doesn't", "doing", "don", "done", 
-             "don't", "down", "downwards", "dp", "dr", "ds", 
-             "dt", "du", "due", "during", "dx", "dy", "e", "e2", 
-             "e3", "ea", "each", "ec", "ed", "edu", "ee", "ef", 
-             "effect", "eg", "ei", "eight", "eighty", "either", 
-             "ej", "el", "eleven", "else", "elsewhere", "em", 
-             "empty", "en", "end", "ending", "enough", "entirely", "eo", "ep", "eq", "er", "es", "especially", "est", "et", "et-al", "etc", "eu", "ev", "even", "ever", "every", "everybody", "everyone", "everything", "everywhere", "ex", "exactly", "example", "except", "ey", "f", "f2", "fa", "far", "fc", "few", "ff", "fi", "fifteen", "fifth", "fify", "fill", "find", "fire", "first", "five", "fix", "fj", "fl", "fn", "fo", "followed", "following", "follows", "for", "former", 
-             "formerly", "forth", "forty", "found", "four", "fr", "from",
-               "front", "fs", "ft", "fu", "full", "further", 
-               "furthermore", "fy", "g", "ga", "gave", "ge", 
-               "get", "gets", "getting", "gi", "give", "given", 
-               "gives", "giving", "gj", "gl", "go", "goes", 
-               "going", "gone", "got", "gotten", "gr", 
-               "greetings", "gs", "gy", "h", "h2", "h3", "had", 
-               "hadn", "hadn't", "happens", "hardly", "has", 
-               "hasn", "hasnt", "hasn't", "have", "haven", 
-               "haven't", "having", "he", "hed", "he'd", 
-               "he'll", "hello", "help", "hence", "her", 
-               "here", "hereafter", "hereby", "herein", 
-               "heres", "here's", "hereupon", "hers", "herself",
-            "hes", "he's", "hh", "hi", "hid", "him", "himself", "his", "hither", "hj", "ho", "home", "hopefully", "how", 
-            "howbeit", "however", "how's", "hr", "hs", "http", "hu", "hundred", "hy", "i", "i2", "i3", "i4", "i6", "i7", "i8", "ia", "ib", "ibid", "ic", "id", "i'd", "ie", "if", "ig", "ignored", "ih", "ii", "ij", "il", "i'll", "im", "i'm", 
-            "immediate", "immediately", "importance", "important", "in", "inasmuch", "inc", "indeed", "index", "indicate", "indicated", "indicates", "information", "inner", "insofar", "instead", "interest", "into", "invention", "inward", "io", "ip", "iq", "ir", "is", 
-            "isn", "isn't", "it", "itd", "it'd", "it'll", "its", "it's", "itself", "iv", "i've", "ix", "iy", "iz", "j", "jj", "jr", "js", "jt", "ju", "just", "k", "ke", "keep", "keeps", "kept", "kg", "kj", "km", "know", "known", "knows", "ko", "l", "l2", "la", "largely", "last", "lately", "later", "latter", "latterly", "lb", "lc", "le", "least", "les", "less", "lest", "let", "lets", "let's", "lf", "like", "liked", "likely", "line", 
-            "little", "lj", "ll", "ll", "ln", "lo", "look", "looking", "looks", "los", "lr", "ls", "lt", "ltd", "m", "m2", "ma", "made", "mainly", "make", "makes", "many", "may", "maybe", "me", "mean", "means", "meantime", "meanwhile", "merely", "mg", "might", "mightn", "mightn't", "mill", "million", "mine", "miss", "ml", "mn", "mo", "more", "moreover", "most", 
-            "mostly", "move", "mr", "mrs", "ms", "mt", "mu", "much", "mug", "must", "mustn", "mustn't", "my", "myself", "n", "n2", "na", "name", "namely", "nay", "nc", "nd", "ne", "near", "nearly", "necessarily", "necessary", "need", "needn", "needn't", "needs", "neither", "never", "nevertheless", "new", "next", "ng", "ni", "nine", "ninety", "nj", "nl", "nn", "no", "nobody", "non", "none", "nonetheless", "noone", "nor", "normally", "nos", "not", "noted", "nothing", "novel", "now", 
-            "nowhere", "nr", "ns", "nt", "ny", "o", "oa", "ob", "obtain", "obtained", "obviously", "oc", "od", "of", "off", "often", "og", "oh", "oi", "oj", "ok", "okay", "ol", "old", "om", "omitted", "on", "once", "one", "ones", "only", "onto", "oo", "op", "oq", "or", "ord", "os", "ot", "other", "others", "otherwise", "ou", "ought", "our", "ours", "ourselves", "out", "outside", "over", "overall", "ow", "owing", "own", "ox", "oz", "p", "p1", "p2", "p3", "page", "pagecount", "pages", 
-            "par", "part", "particular", "particularly", "pas", "past", "pc", "pd", "pe", "per", "perhaps", "pf", "ph", "pi", "pj", "pk", "pl", "placed", "please", "plus", "pm", "pn", "po", "poorly", "possible", "possibly", "potentially", "pp", "pq", "pr", "predominantly", "present", "presumably", "previously", "primarily", "probably", "promptly", "proud", "provides", "ps", "pt", "pu", "put", "py", "q", "qj", "qu", "que", "quickly", "quite", "qv", "r", "r2", "ra", "ran", "rather", "rc", 
-            "rd", "re", "readily", "really", "reasonably", "recent", "recently", "ref", "refs", "regarding", "regardless", "regards", "related", "relatively", "research", "research-articl", "respectively", "resulted", "resulting", "results", "rf", "rh", "ri", "right", "rj", "rl", "rm", "rn", "ro", "rq", "rr", "rs", "rt", "ru", "run", "rv", "ry", "s", "s2", "sa", "said", "same", "saw", "say", "saying", "says", "sc", "sd", "se", "sec", "second", "secondly", "section", "see", "seeing", "seem", "seemed", "seeming", "seems", "seen", "self", "selves", "sensible", "sent", "serious", "seriously", "seven", "several", "sf", "shall", "shan", "shan't", "she", "shed", "she'd", "she'll", "shes", "she's", "should", "shouldn", "shouldn't", "should've", "show", "showed", 
-            "shown", "showns", "shows", "si", "side", "significant", "significantly", "similar", "similarly", "since", "sincere", "six", "sixty", "sj", "sl", "slightly", "sm", "sn", "so", "some", "somebody", "somehow", "someone", "somethan", "something", "sometime", "sometimes", "somewhat", "somewhere", "soon", "sorry", "sp", "specifically", "specified", "specify", "specifying", "sq", "sr", "ss", "st", "still", "stop", "strongly", "sub", "substantially", "successfully", "such", "sufficiently", "suggest", "sup", "sure", "sy", "system", "sz", "t", "t1", "t2", "t3", "take", "taken", "taking", "tb", "tc", "td", "te", "tell", "ten", "tends", "tf", "th", "than", "thank", "thanks", "thanx", "that", "that'll", "thats", "that's", "that've", "the", "their", "theirs", "them", "themselves", "then", "thence", "there", "thereafter", "thereby", "thered", "therefore", "therein", "there'll", "thereof", "therere", "theres", "there's", "thereto", 
-            "thereupon", "there've", "these", "they", "theyd", "they'd", "they'll", "theyre", "they're", "they've", "thickv", "thin", "think", "third", "this", "thorough", "thoroughly", "those", "thou", "though", "thoughh", "thousand", "three", "throug", "through", "throughout", "thru", "thus", "ti", "til", "tip", "tj", "tl", "tm", "tn", "to", "together", "too", "took", "top", "toward", "towards", "tp", "tq", "tr", "tried", "tries", "truly", "try", "trying", "ts", "t's", "tt", "tv", "twelve", "twenty", "twice", "two", "tx", "u", "u201d", "ue", "ui", "uj", "uk", "um", "un", "under", "unfortunately", "unless", "unlike", "unlikely", "until", "unto", "uo", "up", "upon", "ups", "ur", "us", "use", "used", "useful", "usefully", "usefulness", "uses", "using", "usually", "ut", "v", "va", "value", "various", "vd", "ve", "ve", "very", "via", "viz", "vj", "vo", "vol", "vols", "volumtype", "vq", "vs", "vt", "vu", "w", "wa", "want", "wants", "was", "wasn", "wasnt", 
-            "wasn't", "way", "we", "wed", "we'd", "welcome", "well", "we'll", "well-b", "went", "were", "we're", "weren", "werent", "weren't", "we've", "what", "whatever", "what'll", "whats", "what's", "when", "whence", "whenever", "when's", "where", "whereafter", "whereas", "whereby", "wherein", "wheres", "where's", "whereupon", "wherever", "whether", "which", "while", "whim", "whither", "who", "whod", "whoever", "whole", "who'll", "whom", "whomever", "whos", "who's", "whose", "why", "why's", "wi", "widely", "will", "willing", "wish", "with", "within", "without", "wo", "won", "wonder", "wont", "won't", "words", "world", "would", "wouldn", "wouldnt", "wouldn't", "www", "x", "x1", "x2", "x3", "xf", "xi", "xj", "xk", "xl", "xn", "xo", "xs", "xt", "xv", "xx", "y", "y2", "yes", "yet", "yj", "yl", "you", "youd", "you'd", "you'll", "your", "youre", "you're", "yours", "yourself", "yourselves", "you've", "yr", "ys", "yt", "z", "zero", "zi", "zz",]
+stopwordSet = {"a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
+               "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being",
+               "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't",
+               "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during",
+               "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have",
+               "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers",
+               "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've",
+               "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more",
+               "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only",
+               "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't",
+               "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than",
+               "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's",
+               "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to",
+               "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've",
+               "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who",
+               "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll",
+               "you're", "you've", "your", "yours", "yourself", "yourselves"}

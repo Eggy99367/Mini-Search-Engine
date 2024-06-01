@@ -6,6 +6,7 @@ def fetch_json(path):
     with open(path, 'r') as file:
         return json.loads(file.read())
 
+
 def fetch_token_list(path):
     with open(path, 'r') as file:
         return file.read().split(',')
@@ -13,6 +14,7 @@ def fetch_token_list(path):
 
 def fetch_token(record: str):
     return re.search(r'\[(.*?)\]', record).group(1).split(":")[0]
+
 
 def fetch_freq(record: str):
     return int(re.search(r'\[(.*?)\]', record).group(1).split(":")[1])
@@ -43,10 +45,14 @@ class fetcher:
     def __exit__(self, *args):
         self.token_file.close()
 
+    # Get the total number of URLS
+    def get_url_size(self):
+        return len(self.urls_dict)
+
     # input a docID, return the url
     def get_url_by_id(self, docId) -> str:
         return self.urls_dict[str(docId)]["url"]
-    
+
     def _get_token_index(self, token: str):
         if token in self.word_dict:
             return int(self.word_dict[token])
@@ -75,9 +81,27 @@ class fetcher:
         except Exception:
             return []
 
-
     def get_docIds_by_token(self, token):
         try:
             return [p[0] for p in self.get_postings(token)]
         except Exception:
             return []
+
+    def get_wt_by_token(self, token):
+        try:
+            return [p[1] for p in self.get_postings(token)]
+        except Exception:
+            return []
+
+    def get_posting_info_by_token(self, token):
+        try:
+            return {p[0]: p[1] for p in self.get_postings(token)}
+        except Exception:
+            return {}
+
+    def get_posting_info_by_token_docID(self, token, idList):
+        try:
+            idSet = set(idList)
+            return {p[0]: p[1] for p in self.get_postings(token) if p[0] in idSet}
+        except Exception:
+            return {}
