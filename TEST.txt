@@ -42,10 +42,10 @@ keyword is inside every stored document.
 
 
 Improvements we mad:
-We start off by using the psuedocode in Lecture 20 we calculate
-the score for every documents each keyword has. Unfortunately, 
-it would took a long time for us to get the result of every 
-query. It took us 22 seconds to get the top ten urls of the query
-"ics class". After that, we optimize our algorithm by removing 
-nearly duplicated documents and find intersected documents among 
-the keywords so the search engine can run faster
+We start by using the psuedocode in Lecture 20. We calculate
+the score for every document each keyword has. Unfortunately, 
+we will take a long time to get the results of every 
+query. It took us 22 seconds to get the top ten URLs of the query
+"ics class." After that, we optimize our algorithm by removing 
+nearly duplicated documents and finding intersected documents among 
+the keywords so the search engine can run faster.
