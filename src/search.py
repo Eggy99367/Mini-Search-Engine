@@ -41,7 +41,7 @@ def get_freq_of_each_term(length: list, token_freq: int):
     if(token_freq > 0):
         length.append(token_freq)
 
-def compute_cosine_score(fetcher, list_of_keywords: list, ids:list):
+def compute_cosine_score(fetcher, list_of_keywords: list, ids:list, all_postings: list):
     scores = [] # score for each document
     length = [] # freq for each document
 
@@ -59,8 +59,9 @@ def compute_cosine_score(fetcher, list_of_keywords: list, ids:list):
     #     for doc_id, _ in postings:
     #         doc_count[doc_id] += 1
     for each_docID in set(ids):
-        doc_count[each_docID] = ids.count(each_docID)
+        doc_count[each_docID] = all_postings.count(each_docID)
     
+
     
     for each_token in list_of_keywords:
         postings = fetcher.get_postings(each_token)
@@ -70,6 +71,7 @@ def compute_cosine_score(fetcher, list_of_keywords: list, ids:list):
     filtered_doc_count = {doc_id: count for doc_id, count in doc_count.items() if count >= len(list_of_keywords)}
     # Filter documents that appear in at least 4 out of the 4 keywords
     relevant_docs = {doc_id for doc_id in filtered_doc_count}
+
 
     # If the number of relevant documents is less than or equal to 50, switch to 75% of the keywords
     if len(relevant_docs) <= 50:
@@ -98,21 +100,26 @@ def compute_cosine_score(fetcher, list_of_keywords: list, ids:list):
 def data_processing(stemmed_tokens, newFetcher):
     #get token sorted by freq
     sortedToken = sorted([(token, newFetcher.get_token_freq(token)) for token in stemmed_tokens], key=(lambda x: x[1]))
+    # print(sortedToken)
+    list_of_all_postings = []
     if len(sortedToken)==1:
         ids = newFetcher.get_docIds_by_token(sortedToken[0][0])
+        list_of_all_postings += ids
         print("The top ten urls under this search:")
-        result = compute_cosine_score(newFetcher, stemmed_tokens, ids)
+        result = compute_cosine_score(newFetcher, stemmed_tokens, ids, list_of_all_postings)
     else:
         curr_token = sortedToken[0][0]
         ids = newFetcher.get_docIds_by_token(curr_token)
+        list_of_all_postings += ids
         for index in range(1,len(sortedToken)):
             curr_token = sortedToken[index][0]
             ids = intersect(ids, newFetcher.get_docIds_by_token(curr_token))
+            list_of_all_postings += newFetcher.get_docIds_by_token(curr_token)
         # Print the first five url that contains all token
         print("The top ten urls under this search:")
         # for idNum in ids[:10]:
         #     print(newFetcher.get_url_by_id(idNum))
-        result = compute_cosine_score(newFetcher, stemmed_tokens, ids)
+        result = compute_cosine_score(newFetcher, stemmed_tokens, ids, list_of_all_postings)
     
     return result
 
